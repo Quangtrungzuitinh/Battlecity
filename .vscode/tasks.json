@@ -1,0 +1,38 @@
+{
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "C/C++: Build SDL Game",
+            "command": "C:\\msys64\\ucrt64\\bin\\g++.exe",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                "${workspaceFolder}/src/main.cpp",
+                "${workspaceFolder}/src/Tank.cpp",
+                "${workspaceFolder}/src/Bullet.cpp",
+                "${workspaceFolder}/src/Enemy.cpp",
+                "-o", "${workspaceFolder}/bin/game.exe",
+                "-I", "${workspaceFolder}/include",
+                "-I", "${workspaceFolder}/external/SDL2/include",
+                "-I", "${workspaceFolder}/external/SDL2_image/include",
+                "-I", "${workspaceFolder}/external/SDL2_ttf/include",
+                "-L", "${workspaceFolder}/external/SDL2/lib",
+                "-L", "${workspaceFolder}/external/SDL2_image/lib",
+                "-L", "${workspaceFolder}/external/SDL2_ttf/lib",
+                "-lmingw32", "-lSDL2main", "-lSDL2", "-lSDL2_image", "-lSDL2_ttf"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Task to build SDL Battle City game"
+        }
+    ],
+    "version": "2.0.0"
+}
