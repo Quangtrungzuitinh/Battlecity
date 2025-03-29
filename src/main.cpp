@@ -1,9 +1,11 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <iostream>
 #include "Tank.h"
 #include "Bullet.h"
 #include "Enemy.h"
 #include <vector>
+#include <string>        
 #include <algorithm>
 #include "obstacle.h"
 
@@ -45,18 +47,25 @@ bool checkCollision(const Bullet &b, const Obstacle &o) {
     return o.checkCollision(b.getX(), b.getY(), BULLET_SIZE);
 }
 
+SDL_Texture* loadTexture(const std::string &path, SDL_Renderer *renderer) {
+    SDL_Texture *texture = IMG_LoadTexture(renderer, path.c_str());
+    if (!texture) {
+        std::cerr << "Lỗi khi load ảnh: " << path << " - " << IMG_GetError() ;
+    }
+    return texture;
+}
 
-// Hàm vẽ số mạng còn lại ở góc dưới bên phải
-void drawLives(SDL_Renderer *renderer, int lives) {
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    int iconSize = 20;
-    int padding = 5;
+
+// Hàm vẽ số mạng còn lại bằng hình ảnh trái tim
+void drawLives(SDL_Renderer *renderer, SDL_Texture *heartTexture, int lives) {
+    int iconSize = 30;   // Kích thước của ảnh trái tim
+    int padding = 5;     // Khoảng cách giữa các icon
     int startX = SCREEN_WIDTH - (lives * (iconSize + padding));
-    int startY = SCREEN_HEIGHT - 30;
+    int startY = SCREEN_HEIGHT - iconSize - 10; // Dịch lên một chút để không sát mép
 
     for (int i = 0; i < lives; ++i) {
-        SDL_Rect lifeRect = {startX + i * (iconSize + padding), startY, iconSize, iconSize};
-        SDL_RenderFillRect(renderer, &lifeRect);
+        SDL_Rect heartRect = {startX + i * (iconSize + padding), startY, iconSize, iconSize};
+        SDL_RenderCopy(renderer, heartTexture, nullptr, &heartRect);
     }
 }
 
@@ -75,6 +84,12 @@ int main(int argc, char *argv[]) {
     std::vector<Enemy> enemies;
 
     int playerLives = PLAYER_LIVES;
+    // Load hình trái tim
+SDL_Texture *heartTexture = loadTexture("C:/Users/ACER/Documents/Tap code/GameGem/assets/heart.png", renderer);
+
+// Gọi hàm vẽ số mạng với hình trái tim
+drawLives(renderer, heartTexture, playerLives);
+
 
     Uint32 lastEnemySpawnTime = SDL_GetTicks(); // Lưu thời điểm spawn enemy cuối cùng
 
@@ -173,7 +188,7 @@ while (running) {
         enemy.draw(renderer);
     }
 
-    drawLives(renderer, playerLives);
+    drawLives(renderer, heartTexture, playerLives);
 
     SDL_RenderPresent(renderer);
 
@@ -181,6 +196,7 @@ while (running) {
 }
 
     SDL_DestroyRenderer(renderer);
+    SDL_DestroyTexture(heartTexture);
     SDL_DestroyWindow(window);
     SDL_Quit();
 
