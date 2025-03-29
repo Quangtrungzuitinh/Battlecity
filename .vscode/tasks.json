@@ -11,6 +11,7 @@
                 "${workspaceFolder}/src/Tank.cpp",
                 "${workspaceFolder}/src/Bullet.cpp",
                 "${workspaceFolder}/src/Enemy.cpp",
+                "${workspaceFolder}/src/Obstacle.cpp", 
                 "-o", "${workspaceFolder}/bin/game.exe",
                 "-I", "${workspaceFolder}/include",
                 "-I", "${workspaceFolder}/external/SDL2/include",

@@ -4,10 +4,24 @@
 #include "Enemy.h"
 #include <vector>
 #include <algorithm>
+#include "obstacle.h"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 const int PLAYER_LIVES = 7;
+int obstacleWidth = 100;
+int obstacleHeight = 200;
+
+int obstacleX = (SCREEN_WIDTH - obstacleWidth) / 2;
+int obstacleY = (SCREEN_HEIGHT - obstacleHeight) / 2;
+
+Obstacle obstacle(obstacleX, obstacleY, obstacleWidth, obstacleHeight);
+// Khởi tạo chướng ngại vật hình chữ H
+std::vector<Obstacle> obstacles = {
+    Obstacle(520, 200, 100, 20), // Thanh ngang trên
+    Obstacle(350, 380, 100, 20), // Thanh ngang dưới
+    Obstacle(370, 220, 20, 160)  // Thanh dọc giữa
+};
 
 // Hàm kiểm tra va chạm giữa Bullet và Tank
 bool checkCollision(const Bullet &b, const Tank &t) {
@@ -24,6 +38,12 @@ bool checkCollision(const Bullet &b, const Enemy &e) {
             b.getY() < e.getY() + ENEMY_SIZE &&
             b.getY() + BULLET_SIZE > e.getY());
 }
+
+// Hàm kiểm tra va chạm giữa Bullet và Obstacle
+bool checkCollision(const Bullet &b, const Obstacle &o) {
+    return o.checkCollision(b.getX(), b.getY(), BULLET_SIZE);
+}
+
 
 // Hàm vẽ số mạng còn lại ở góc dưới bên phải
 void drawLives(SDL_Renderer *renderer, int lives) {
@@ -63,7 +83,7 @@ while (running) {
             running = false;
         }
 
-        player.move(e);
+        player.move(e, obstacles);
 
         if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
             bullets.emplace_back(player.getX() + TANK_SIZE / 2 - BULLET_SIZE / 2, player.getY(), 8, player.getDirection());
@@ -81,7 +101,7 @@ while (running) {
     }
 
     for (auto &enemy : enemies) {
-        enemy.move();
+        enemy.move(obstacles);
         if (rand() % 100 < 2) {
             enemyBullets.emplace_back(enemy.getX() + ENEMY_SIZE / 2 - BULLET_SIZE / 2, enemy.getY(), 6, enemy.getDirection());
         }
@@ -90,6 +110,9 @@ while (running) {
     for (auto &bullet : enemyBullets) {
         bullet.move();
     }
+
+    for (auto &obs : obstacles) obs.draw(renderer);
+
 
     // Xóa đạn ra khỏi màn hình
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(), [](const Bullet &b) {
@@ -134,6 +157,10 @@ while (running) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
+    for (auto &obs : obstacles) {
+        obs.draw(renderer);
+    }
+    
     player.draw(renderer);
     for (auto &bullet : bullets) {
         bullet.draw(renderer);

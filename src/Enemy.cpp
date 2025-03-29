@@ -1,23 +1,42 @@
 #include "Enemy.h"
 #include <cstdlib>
 
+const int SCREEN_WIDTH = 800;
+const int SCREEN_HEIGHT = 600;
+
 Enemy::Enemy(int startX, int startY, int spd) : x(startX), y(startY), speed(spd) {
     direction = rand() % 4; // Ngẫu nhiên hướng di chuyển ban đầu
 }
 
-void Enemy::move() {
+void Enemy::move(const std::vector<Obstacle> &obstacles) {
+    int newX = x, newY = y;
+
     switch (direction) {
-        case 0: y -= speed; break; // Up
-        case 1: y += speed; break; // Down
-        case 2: x -= speed; break; // Left
-        case 3: x += speed; break; // Right
+        case 0: newY -= speed; break;
+        case 1: newY += speed; break;
+        case 2: newX -= speed; break;
+        case 3: newX += speed; break;
     }
 
-    // Đổi hướng nếu ra khỏi màn hình
-    if (x < 0 || y < 0 || x > 800 - ENEMY_SIZE || y > 600 - ENEMY_SIZE) {
-        changeDirection();
+    // Kiểm tra va chạm với chướng ngại vật
+    for (const auto &obs : obstacles) {
+        if (obs.checkCollision(newX, newY, ENEMY_SIZE)) {
+            changeDirection();
+            return;
+        }
     }
+    if (newX < 0 || newX + ENEMY_SIZE > SCREEN_WIDTH ||
+        newY < 0 || newY + ENEMY_SIZE > SCREEN_HEIGHT) {
+        direction = rand() % 4; // Chọn hướng mới
+    } else {
+        x = newX;
+        y = newY;
+    }
+
+    x = newX;
+    y = newY;
 }
+
 
 void Enemy::draw(SDL_Renderer *renderer) {
     SDL_Rect enemyRect = {x, y, ENEMY_SIZE, ENEMY_SIZE};

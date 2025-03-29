@@ -2,6 +2,8 @@
 #define ENEMY_H
 
 #include <SDL2/SDL.h>
+#include <vector>
+#include "Obstacle.h"
 
 const int ENEMY_SIZE = 40;
 
@@ -22,6 +24,7 @@ public:
     int getY() const { return y; }
 
     void changeDirection();
+	void move(const std::vector<Obstacle> &obstacles);
 
     int getDirection() const; // Move this method declaration to the public section.
 };
