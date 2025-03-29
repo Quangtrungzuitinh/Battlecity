@@ -2,6 +2,7 @@
 #define TANK_H
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <vector>
 #include "Obstacle.h"
 
@@ -12,9 +13,11 @@ private:
     int x, y;
     int speed;
     int direction;
+    SDL_Texture* texture; // Thêm texture
 
 public:
-    Tank(int startX, int startY, int spd);
+    Tank(int startX, int startY, int spd, SDL_Renderer* renderer);
+    ~Tank(); // Destructor để giải phóng texture
 
     int getDirection() const { return direction; }
 
@@ -26,5 +29,4 @@ public:
     int getX() const { return x; }
     int getY() const { return y; }
 };
-
 #endif

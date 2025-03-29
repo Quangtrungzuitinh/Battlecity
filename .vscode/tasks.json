@@ -2,7 +2,7 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "C/C++: Build SDL Game",
+            "label": "C/C++: Build SDL Game (ucrt64)",
             "command": "C:\\msys64\\ucrt64\\bin\\g++.exe",
             "args": [
                 "-fdiagnostics-color=always",
@@ -13,14 +13,15 @@
                 "${workspaceFolder}/src/Enemy.cpp",
                 "${workspaceFolder}/src/Obstacle.cpp", 
                 "-o", "${workspaceFolder}/bin/game.exe",
-                "-I", "${workspaceFolder}/include",
-                "-I", "${workspaceFolder}/external/SDL2/include",
-                "-I", "${workspaceFolder}/external/SDL2_image/include",
-                "-I", "${workspaceFolder}/external/SDL2_ttf/include",
-                "-L", "${workspaceFolder}/external/SDL2/lib",
-                "-L", "${workspaceFolder}/external/SDL2_image/lib",
-                "-L", "${workspaceFolder}/external/SDL2_ttf/lib",
-                "-lmingw32", "-lSDL2main", "-lSDL2", "-lSDL2_image", "-lSDL2_ttf"
+
+                // Đường dẫn tới include của SDL2 trong ucrt64
+                "-I", "C:/msys64/ucrt64/include/SDL2",
+
+                // Đường dẫn tới lib của SDL2 trong ucrt64
+                "-L", "C:/msys64/ucrt64/lib",
+
+                // Liên kết các thư viện SDL2 và SDL2_image
+                "-lmingw32", "-lSDL2main", "-lSDL2", "-lSDL2_image"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -32,7 +33,7 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "detail": "Task to build SDL Battle City game"
+            "detail": "Task to build SDL2 game using ucrt64"
         }
     ],
     "version": "2.0.0"

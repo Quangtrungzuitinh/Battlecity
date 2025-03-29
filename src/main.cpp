@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include "Tank.h"
 #include "Bullet.h"
 #include "Enemy.h"
@@ -9,19 +10,19 @@
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 const int PLAYER_LIVES = 7;
-int obstacleWidth = 100;
-int obstacleHeight = 200;
+int obstacleWidth = 700;
+    int obstacleHeight = 300;
+    int obstacleX = (SCREEN_WIDTH - obstacleWidth) / 2;
+    int obstacleY = (SCREEN_HEIGHT - obstacleHeight) / 2;
 
-int obstacleX = (SCREEN_WIDTH - obstacleWidth) / 2;
-int obstacleY = (SCREEN_HEIGHT - obstacleHeight) / 2;
+    std::vector<Obstacle> obstacles = {
+        Obstacle(50, obstacleY, 700, 30), // Thanh ngang trên mở rộng
+        Obstacle(50, obstacleY + obstacleHeight - 30, 700, 30), // Thanh ngang dưới mở rộng
+        Obstacle(obstacleX + (obstacleWidth / 2) - 15, obstacleY + 30, 30, obstacleHeight - 60) // Thanh dọc giữa
+    };
 
-Obstacle obstacle(obstacleX, obstacleY, obstacleWidth, obstacleHeight);
-// Khởi tạo chướng ngại vật hình chữ H
-std::vector<Obstacle> obstacles = {
-    Obstacle(520, 200, 100, 20), // Thanh ngang trên
-    Obstacle(350, 380, 100, 20), // Thanh ngang dưới
-    Obstacle(370, 220, 20, 160)  // Thanh dọc giữa
-};
+    bool running = true;
+    SDL_Event event;
 
 // Hàm kiểm tra va chạm giữa Bullet và Tank
 bool checkCollision(const Bullet &b, const Tank &t) {
@@ -68,10 +69,10 @@ int main(int argc, char *argv[]) {
     bool running = true;
     SDL_Event e;
 
-    Tank player(400, 500, 5);
+    Tank player(400, 500, 5 , renderer);
     std::vector<Bullet> bullets;
     std::vector<Bullet> enemyBullets;
-    std::vector<Enemy> enemies = {Enemy(100, 100, 2), Enemy(600, 100, 2)};
+    std::vector<Enemy> enemies;
 
     int playerLives = PLAYER_LIVES;
 
@@ -90,9 +91,9 @@ while (running) {
         }
     }
 
-    // Kiểm tra nếu đủ 10 giây thì thêm Enemy mới
-    if (SDL_GetTicks() - lastEnemySpawnTime >= 10000) {
-        enemies.emplace_back(rand() % (SCREEN_WIDTH - ENEMY_SIZE), rand() % 200, 2);
+     // Kiểm tra nếu đủ 5 giây thì thêm Enemy mới (giảm từ 10s xuống 5s)
+     if (SDL_GetTicks() - lastEnemySpawnTime >= 5000) {
+        enemies.emplace_back(rand() % (SCREEN_WIDTH - ENEMY_SIZE), rand() % 200, 2, renderer);
         lastEnemySpawnTime = SDL_GetTicks(); // Cập nhật thời gian spawn mới
     }
 

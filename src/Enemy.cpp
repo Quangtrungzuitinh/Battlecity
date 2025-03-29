@@ -4,8 +4,22 @@
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
-Enemy::Enemy(int startX, int startY, int spd) : x(startX), y(startY), speed(spd) {
+Enemy::Enemy(int startX, int startY, int spd, SDL_Renderer* renderer) : x(startX), y(startY), speed(spd), texture(nullptr) {
     direction = rand() % 4; // Ngẫu nhiên hướng di chuyển ban đầu
+    
+    SDL_Surface* surface = IMG_Load("assets/enemy.png");
+    if (!surface) {
+        SDL_Log("Không thể tải enemy.png: %s", IMG_GetError());
+    } else {
+        texture = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_FreeSurface(surface);
+    }
+}
+
+Enemy::~Enemy() {
+    if (texture) {
+        SDL_DestroyTexture(texture);
+    }
 }
 
 void Enemy::move(const std::vector<Obstacle> &obstacles) {
@@ -37,11 +51,14 @@ void Enemy::move(const std::vector<Obstacle> &obstacles) {
     y = newY;
 }
 
-
 void Enemy::draw(SDL_Renderer *renderer) {
     SDL_Rect enemyRect = {x, y, ENEMY_SIZE, ENEMY_SIZE};
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    SDL_RenderFillRect(renderer, &enemyRect);
+    if (texture) {
+        SDL_RenderCopy(renderer, texture, nullptr, &enemyRect);
+    } else {
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        SDL_RenderFillRect(renderer, &enemyRect);
+    }
 }
 
 void Enemy::changeDirection() {

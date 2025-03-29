@@ -1,8 +1,27 @@
 #include "Tank.h"
+#include <SDL.h>
+#include <SDL_image.h>
 
-Tank::Tank(int startX, int startY, int spd) : x(startX), y(startY), speed(spd) {}
+Tank::Tank(int startX, int startY, int spd, SDL_Renderer* renderer)
+    : x(startX), y(startY), speed(spd), texture(nullptr) {
 
-void Tank::move(SDL_Event &event, const std::vector<Obstacle> &obstacles) {
+    // Tải texture cho Tank
+    SDL_Surface* surface = IMG_Load("assets/player.png");
+    if (!surface) {
+        SDL_Log("Không thể tải player.png: %s", IMG_GetError());
+    } else {
+        texture = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_FreeSurface(surface);
+    }
+}
+
+Tank::~Tank() {
+    if (texture) {
+        SDL_DestroyTexture(texture);
+    }
+}
+
+void Tank::move(SDL_Event& event, const std::vector<Obstacle>& obstacles) {
     int newX = x, newY = y;
 
     if (event.type == SDL_KEYDOWN) {
@@ -14,9 +33,9 @@ void Tank::move(SDL_Event &event, const std::vector<Obstacle> &obstacles) {
         }
     }
 
-    // Kiểm tra va chạm với chướng ngại vật trước khi cập nhật vị trí
+    // Kiểm tra va chạm với chướng ngại vật
     bool canMove = true;
-    for (const auto &obs : obstacles) {
+    for (const auto& obs : obstacles) {
         if (obs.checkCollision(newX, newY, TANK_SIZE)) {
             canMove = false;
             break;
@@ -29,10 +48,9 @@ void Tank::move(SDL_Event &event, const std::vector<Obstacle> &obstacles) {
     }
 }
 
-
-
-void Tank::draw(SDL_Renderer *renderer) {
+void Tank::draw(SDL_Renderer* renderer) {
     SDL_Rect tankRect = {x, y, TANK_SIZE, TANK_SIZE};
-    SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-    SDL_RenderFillRect(renderer, &tankRect);
+    if (texture) {
+        SDL_RenderCopy(renderer, texture, nullptr, &tankRect);
+    }
 }
