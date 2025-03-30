@@ -121,6 +121,19 @@ bool checkCollision(const Bullet &b, const Obstacle &o) {
     return o.checkCollision(b.getX(), b.getY(), BULLET_SIZE);
 }
 
+bool isCollidingWithObstacle(int x, int y, int width, int height, const std::vector<Obstacle>& obstacles) {
+    for (const auto& obs : obstacles) {
+        if (x < obs.getX() + obs.getWidth() &&
+            x + width > obs.getX() &&
+            y < obs.getY() + obs.getHeight() &&
+            y + height > obs.getY()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 SDL_Texture* loadTexture(const std::string &path, SDL_Renderer *renderer) {
     SDL_Texture *texture = IMG_LoadTexture(renderer, path.c_str());
     if (!texture) {
@@ -158,126 +171,110 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    Tank player(400, 500, 5 , renderer);
+    Tank player(400, 500, 5, renderer);
     std::vector<Bullet> bullets;
     std::vector<Bullet> enemyBullets;
     std::vector<Enemy> enemies;
 
     int playerLives = PLAYER_LIVES;
-    // Load hình trái tim
-SDL_Texture *heartTexture = loadTexture("C:/Users/ACER/Documents/Tap code/GameGem/assets/heart.png", renderer);
+    SDL_Texture *heartTexture = loadTexture("C:/Users/ACER/Documents/Tap code/GameGem/assets/heart.png", renderer);
+    Uint32 lastEnemySpawnTime = SDL_GetTicks(); 
 
-// Gọi hàm vẽ số mạng với hình trái tim
-drawLives(renderer, heartTexture, playerLives);
+    while (running) {
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_QUIT) {
+                running = false;
+            }
 
+            player.move(e, obstacles);
 
-    Uint32 lastEnemySpawnTime = SDL_GetTicks(); // Lưu thời điểm spawn enemy cuối cùng
-
-while (running) {
-    while (SDL_PollEvent(&e)) {
-        if (e.type == SDL_QUIT) {
-            running = false;
-        }
-
-        player.move(e, obstacles);
-
-        if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
-            bullets.emplace_back(player.getX() + TANK_SIZE / 2 - BULLET_SIZE / 2, player.getY(), 8, player.getDirection());
-        }
-    }
-
-     // Kiểm tra nếu đủ 5 giây thì thêm Enemy mới (giảm từ 10s xuống 5s)
-     if (SDL_GetTicks() - lastEnemySpawnTime >= 5000) {
-        enemies.emplace_back(rand() % (SCREEN_WIDTH - ENEMY_SIZE), rand() % 200, 2, renderer);
-        lastEnemySpawnTime = SDL_GetTicks(); // Cập nhật thời gian spawn mới
-    }
-
-    for (auto &bullet : bullets) {
-        bullet.move();
-    }
-
-    for (auto &enemy : enemies) {
-        enemy.move(obstacles);
-        if (rand() % 100 < 2) {
-            enemyBullets.emplace_back(enemy.getX() + ENEMY_SIZE / 2 - BULLET_SIZE / 2, enemy.getY(), 6, enemy.getDirection());
-        }
-    }
-
-    for (auto &bullet : enemyBullets) {
-        bullet.move();
-    }
-
-    for (auto &obs : obstacles) obs.draw(renderer);
-
-
-    // Xóa đạn ra khỏi màn hình
-    bullets.erase(std::remove_if(bullets.begin(), bullets.end(), [](const Bullet &b) {
-        return b.getX() < 0 || b.getX() > SCREEN_WIDTH || b.getY() < 0 || b.getY() > SCREEN_HEIGHT;
-    }), bullets.end());
-
-    enemyBullets.erase(std::remove_if(enemyBullets.begin(), enemyBullets.end(), [](const Bullet &b) {
-        return b.getX() < 0 || b.getX() > SCREEN_WIDTH || b.getY() < 0 || b.getY() > SCREEN_HEIGHT;
-    }), enemyBullets.end());
-
-    // Kiểm tra va chạm giữa đạn của người chơi và Enemy
-    for (auto bullet = bullets.begin(); bullet != bullets.end();) {
-        bool bulletRemoved = false;
-        for (auto enemy = enemies.begin(); enemy != enemies.end();) {
-            if (checkCollision(*bullet, *enemy)) {
-                enemy = enemies.erase(enemy);
-                bullet = bullets.erase(bullet);
-                bulletRemoved = true;
-                break;
-            } else {
-                ++enemy;
+            if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
+                bullets.emplace_back(player.getX() + TANK_SIZE / 2 - BULLET_SIZE / 2, player.getY(), 8, player.getDirection());
             }
         }
-        if (!bulletRemoved) {
-            ++bullet;
+
+        // Xóa Enemy đã bị tiêu diệt trước khi thêm mới
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](const Enemy &e) {
+            return e.isDestroyed();
+        }), enemies.end());
+
+        // Nếu đủ 5 giây và số lượng Enemy < 3, spawn Enemy mới
+        if (SDL_GetTicks() - lastEnemySpawnTime >= 5000 && enemies.size() < 3) {
+            int newX, newY;
+            do {
+                newX = rand() % (SCREEN_WIDTH - ENEMY_SIZE);
+                newY = rand() % 200;
+            } while (isCollidingWithObstacle(newX, newY, ENEMY_SIZE, ENEMY_SIZE, obstacles));
+
+            enemies.emplace_back(newX, newY, 2, renderer);
+            lastEnemySpawnTime = SDL_GetTicks();
         }
-    }
 
-// Kiểm tra va chạm giữa đạn của Enemy và người chơi
-for (auto bullet = enemyBullets.begin(); bullet != enemyBullets.end();) {
-    if (checkCollision(*bullet, player)) {
-        bullet = enemyBullets.erase(bullet);
-        playerLives--;
-
-        if (playerLives <= 0) {
-            showGameOver(renderer); // Hiển thị game over trong 5 giây
-            running = false; // Kết thúc game
+        for (auto &bullet : bullets) bullet.move();
+        for (auto &enemy : enemies) {
+            enemy.move(obstacles);
+            if (rand() % 100 < 2) {
+                enemyBullets.emplace_back(enemy.getX() + ENEMY_SIZE / 2 - BULLET_SIZE / 2, enemy.getY(), 6, enemy.getDirection());
+            }
         }
-        
-    } else {
-        ++bullet;
+        for (auto &bullet : enemyBullets) bullet.move();
+        for (auto &obs : obstacles) obs.draw(renderer);
+
+        // Xóa đạn ra khỏi màn hình
+        bullets.erase(std::remove_if(bullets.begin(), bullets.end(), [](const Bullet &b) {
+            return b.getX() < 0 || b.getX() > SCREEN_WIDTH || b.getY() < 0 || b.getY() > SCREEN_HEIGHT;
+        }), bullets.end());
+
+        enemyBullets.erase(std::remove_if(enemyBullets.begin(), enemyBullets.end(), [](const Bullet &b) {
+            return b.getX() < 0 || b.getX() > SCREEN_WIDTH || b.getY() < 0 || b.getY() > SCREEN_HEIGHT;
+        }), enemyBullets.end());
+
+        // Kiểm tra va chạm giữa đạn của người chơi và Enemy
+        for (auto bullet = bullets.begin(); bullet != bullets.end();) {
+            bool bulletRemoved = false;
+            for (auto enemy = enemies.begin(); enemy != enemies.end();) {
+                if (checkCollision(*bullet, *enemy)) {
+                    enemy = enemies.erase(enemy);
+                    bullet = bullets.erase(bullet);
+                    bulletRemoved = true;
+                    break;
+                } else {
+                    ++enemy;
+                }
+            }
+            if (!bulletRemoved) ++bullet;
+        }
+
+        // Kiểm tra va chạm giữa đạn của Enemy và người chơi
+        for (auto bullet = enemyBullets.begin(); bullet != enemyBullets.end();) {
+            if (checkCollision(*bullet, player)) {
+                bullet = enemyBullets.erase(bullet);
+                playerLives--;
+
+                if (playerLives <= 0) {
+                    showGameOver(renderer);
+                    running = false; // Kết thúc game
+                }
+            } else {
+                ++bullet;
+            }
+        }
+
+        // Vẽ màn hình
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+
+        for (auto &obs : obstacles) obs.draw(renderer);
+        player.draw(renderer);
+        for (auto &bullet : bullets) bullet.draw(renderer);
+        for (auto &bullet : enemyBullets) bullet.draw(renderer);
+        for (auto &enemy : enemies) enemy.draw(renderer);
+
+        drawLives(renderer, heartTexture, playerLives);
+
+        SDL_RenderPresent(renderer);
+        SDL_Delay(16);
     }
-}
-
-
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderClear(renderer);
-
-    for (auto &obs : obstacles) {
-        obs.draw(renderer);
-    }
-    
-    player.draw(renderer);
-    for (auto &bullet : bullets) {
-        bullet.draw(renderer);
-    }
-    for (auto &bullet : enemyBullets) {
-        bullet.draw(renderer);
-    }
-    for (auto &enemy : enemies) {
-        enemy.draw(renderer);
-    }
-
-    drawLives(renderer, heartTexture, playerLives);
-
-    SDL_RenderPresent(renderer);
-
-    SDL_Delay(16);
-}
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyTexture(heartTexture);
@@ -286,3 +283,4 @@ for (auto bullet = enemyBullets.begin(); bullet != enemyBullets.end();) {
 
     return 0;
 }
+
