@@ -47,6 +47,10 @@ void Tank::move(SDL_Event& event, const std::vector<Obstacle>& obstacles) {
         y = newY;
     }
 }
+void Tank::setPosition(int x, int y) {
+    this->x = x;
+    this->y = y;
+}
 
 void Tank::draw(SDL_Renderer* renderer) {
     SDL_Rect tankRect = {x, y, TANK_SIZE, TANK_SIZE};

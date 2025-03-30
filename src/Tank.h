@@ -18,6 +18,7 @@ private:
 public:
     Tank(int startX, int startY, int spd, SDL_Renderer* renderer);
     ~Tank(); // Destructor để giải phóng texture
+    void setPosition(int x, int y);
 
     int getDirection() const { return direction; }
 

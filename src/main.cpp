@@ -12,20 +12,94 @@
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 const int PLAYER_LIVES = 7;
-int obstacleWidth = 700;
-    int obstacleHeight = 300;
+    int obstacleWidth = 500;
+    int obstacleHeight = 250;
     int obstacleX = (SCREEN_WIDTH - obstacleWidth) / 2;
     int obstacleY = (SCREEN_HEIGHT - obstacleHeight) / 2;
 
+    bool showMenu(SDL_Renderer* renderer) {
+        SDL_Texture* menuTexture = IMG_LoadTexture(renderer, "C:/Users/ACER/Documents/Tap code/GameGem/assets/startmenu.png");
+        if (!menuTexture) {
+            return false;
+        }
+    
+        bool inMenu = true;
+        SDL_Event event;
+        while (inMenu) {
+            while (SDL_PollEvent(&event)) {
+                if (event.type == SDL_QUIT) {
+                    SDL_DestroyTexture(menuTexture);
+                    return false;
+                }
+                if (event.type == SDL_KEYDOWN) {
+                    if (event.key.keysym.sym == SDLK_SPACE) {
+                        SDL_DestroyTexture(menuTexture);
+                        return true; // Bắt đầu game
+                    }
+                    if (event.key.keysym.sym == SDLK_ESCAPE) {
+                        SDL_DestroyTexture(menuTexture);
+                        return false; // Thoát
+                    }
+                }
+            }
+    
+            SDL_RenderClear(renderer);
+            SDL_RenderCopy(renderer, menuTexture, NULL, NULL);
+            SDL_RenderPresent(renderer);
+        }
+        SDL_DestroyTexture(menuTexture);
+        return false;
+    }
+    
+    bool showGameOver(SDL_Renderer* renderer) {
+        SDL_Texture* gameOverTexture = IMG_LoadTexture(renderer, "C:/Users/ACER/Documents/Tap code/GameGem/assets/gameover.png");
+        if (!gameOverTexture) {
+            return false;
+        }
+    
+        Uint32 startTime = SDL_GetTicks(); // Lưu thời điểm bắt đầu hiển thị
+        bool inGameOver = true;
+        SDL_Event event;
+    
+        while (inGameOver) {
+            while (SDL_PollEvent(&event)) {
+                if (event.type == SDL_QUIT) {
+                    SDL_DestroyTexture(gameOverTexture);
+                    return false;
+                }
+            }
+    
+            // Thoát sau 5 giây (5000 ms)
+            if (SDL_GetTicks() - startTime > 5000) {
+                inGameOver = false;
+            }
+    
+            SDL_RenderClear(renderer);
+            SDL_RenderCopy(renderer, gameOverTexture, NULL, NULL);
+            SDL_RenderPresent(renderer);
+            SDL_Delay(16);
+        }
+    
+        SDL_DestroyTexture(gameOverTexture);
+        return false; // Thoát game
+    }
+    
+    
+
+
+
+        
     std::vector<Obstacle> obstacles = {
-        Obstacle(50, obstacleY, 700, 30), // Thanh ngang trên mở rộng
-        Obstacle(50, obstacleY + obstacleHeight - 30, 700, 30), // Thanh ngang dưới mở rộng
+        Obstacle((SCREEN_WIDTH - 500) / 2, obstacleY, 500, 30), // Thanh ngang trên giữa
+        Obstacle((SCREEN_WIDTH - 500) / 2, obstacleY + obstacleHeight - 30, 500, 30), // Thanh ngang dưới giữa
         Obstacle(obstacleX + (obstacleWidth / 2) - 15, obstacleY + 30, 30, obstacleHeight - 60) // Thanh dọc giữa
     };
-
+    
     bool running = true;
     SDL_Event event;
 
+    
+    
 // Hàm kiểm tra va chạm giữa Bullet và Tank
 bool checkCollision(const Bullet &b, const Tank &t) {
     return (b.getX() < t.getX() + TANK_SIZE &&
@@ -77,6 +151,12 @@ int main(int argc, char *argv[]) {
 
     bool running = true;
     SDL_Event e;
+    if (!showMenu(renderer)) {
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 0;
+    }
 
     Tank player(400, 500, 5 , renderer);
     std::vector<Bullet> bullets;
@@ -157,18 +237,22 @@ while (running) {
         }
     }
 
-    // Kiểm tra va chạm giữa đạn của Enemy và người chơi
-    for (auto bullet = enemyBullets.begin(); bullet != enemyBullets.end();) {
-        if (checkCollision(*bullet, player)) {
-            bullet = enemyBullets.erase(bullet);
-            playerLives--;
-            if (playerLives <= 0) {
-                running = false;
-            }
-        } else {
-            ++bullet;
+// Kiểm tra va chạm giữa đạn của Enemy và người chơi
+for (auto bullet = enemyBullets.begin(); bullet != enemyBullets.end();) {
+    if (checkCollision(*bullet, player)) {
+        bullet = enemyBullets.erase(bullet);
+        playerLives--;
+
+        if (playerLives <= 0) {
+            showGameOver(renderer); // Hiển thị game over trong 5 giây
+            running = false; // Kết thúc game
         }
+        
+    } else {
+        ++bullet;
     }
+}
+
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
